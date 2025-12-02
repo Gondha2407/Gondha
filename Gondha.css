@@ -129,6 +129,7 @@ body{
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.03);
     background: rgba(255, 255, 255, 0.02);
+  position: relative; /* allow absolute-positioned controls inside */
 }
 .side-thumbs img{width:100%;height:100%;object-fit:cover;display:block}
 
@@ -146,6 +147,160 @@ body{
 .side-thumbs .thumb-meta strong{color:#fff;font-weight:700;margin-right:4px;font-size:12px}
 .side-thumbs .thumb-meta .meta-dim, .side-thumbs .thumb-meta .meta-new, .side-thumbs .thumb-meta .meta-size, .side-thumbs .thumb-meta .meta-format{color:var(--muted);font-weight:600}
 .side-thumbs .thumb {display:flex;flex-direction:column}
+
+/* delete button overlay in top-right of each thumb */
+.side-thumbs .thumb-delete{
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 4;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #fff;
+  padding:6px 8px;
+  border-radius:8px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+.side-thumbs .thumb-delete i{font-size:12px}
+.side-thumbs .thumb-delete:hover{background:rgba(255,82,82,0.95);border-color:rgba(255,82,82,0.9)}
+
+/* Convert page: enforce compact 3x2 grid and hide paging by limiting visual area */
+.side-thumbs.grid-3x2{
+  position: relative;
+  grid-template-columns: repeat(3, 1fr);
+  /* increase row height so thumbnail image + metadata fit comfortably */
+  grid-auto-rows: 140px;
+  /* leave space for up to two rows of thumbs plus the control bar height */
+  max-height: calc((140px * 2) + 10px + 48px);
+  overflow: hidden;
+  padding-top: 48px; /* reserve space for controls when present */
+}
+
+.side-thumbs.grid-3x2 .side-thumbs-controls{
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  z-index: 3;
+  display: flex; /* keep same layout */
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px;
+  background: rgba(7,18,38,0.25);
+  border-radius: 8px;
+}
+
+/* Ensure each thumb reserves space for metadata and doesn't let the image consume whole cell */
+.side-thumbs.grid-3x2 .thumb{
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.side-thumbs.grid-3x2 .thumb img{
+  width:100%;
+  height:auto; /* let image size adapt so meta remains visible */
+  flex:1 1 auto;
+  object-fit:cover;
+}
+.side-thumbs.grid-3x2 .thumb .thumb-meta{
+  flex:0 0 56px; /* reserve ~56px for metadata area */
+  padding:8px 10px;
+}
+
+/* Horizontal scroll variant (used on convert page): single-row scroller */
+.side-thumbs.horizontal-scroll{
+  display:flex;
+  flex-direction:row;
+  align-items:flex-start;
+  gap:12px;
+  padding:12px;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.side-thumbs.horizontal-scroll .thumb{
+  flex:0 0 160px;
+  width:160px;
+  height:auto;
+  display:flex;
+  flex-direction:column;
+  border-radius:10px;
+}
+.side-thumbs.horizontal-scroll .thumb img{
+  width:100%;
+  height:100px;
+  object-fit:cover;
+  display:block;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+}
+.side-thumbs.horizontal-scroll .thumb .thumb-meta{flex:0 0 auto;padding:8px 6px}
+
+/* Controls for horizontal scroller: overlay left/right */
+.side-thumbs.horizontal-scroll .side-thumbs-controls{
+  position: absolute;
+  top: 50%;
+  left: 6px;
+  right: 6px;
+  transform: translateY(-50%);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  pointer-events:none;
+}
+.side-thumbs.horizontal-scroll .side-thumbs-controls button{pointer-events:auto}
+
+/* Make the full-width "Gambar lainnya" card look spacious like the design */
+.side-thumbs.horizontal-scroll{
+  padding:22px;
+  min-height:160px; /* reserve a generous area so card feels roomy */
+  align-items:center; /* vertically center empty state */
+}
+
+.side-thumbs.horizontal-scroll .thumb{
+  flex:0 0 180px;
+  width:180px;
+  height:auto;
+  border-radius:10px;
+  background:transparent;
+}
+
+.side-thumbs.horizontal-scroll .thumb img{
+  height:110px;
+}
+
+/* Placeholder when no thumbnails exist: center content and match muted style */
+.side-thumbs.horizontal-scroll .thumb-empty{
+  width:100%;
+  min-height:120px;
+  display:flex;
+  align-items:center;
+  padding:18px;
+  color:var(--muted);
+  font-weight:600;
+  border-radius:8px;
+}
+
+/* Export preview panel styles */
+.export-preview-wrap{display:flex;flex-direction:column;gap:8px}
+.export-preview-wrap .card-header{margin-bottom:6px}
+.export-preview-wrap iframe{background:#fff;border-radius:8px}
+
+/* Side-by-side export preview when first image is portrait (tall).
+   Keep the export preview as a sibling of .canvas-area and place it in the
+   third grid column so it remains outside the canvas area while visually
+   appearing beside it. */
+.editor > #export-preview-section.export-side-by-side{
+  grid-column: 3 / 4;
+  align-self: start;
+  max-width: 380px;
+  width: 100%;
+  margin-top: 0;
+}
+.editor > #export-preview-section.export-side-by-side .export-preview-wrap iframe{height:420px}
 
 .side-thumbs .selected-thumb{outline:2px solid rgba(123,97,255,0.18);box-shadow:0 8px 20px rgba(123,97,255,0.06);}
 
@@ -240,6 +395,27 @@ body{
 }
 .sizes-card.open .card-header h2[role="button"]::after{transform:rotate(180deg)}
 
+/* Tidy Ukuran Gambar layout */
+.sizes-card .control-row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  margin-bottom:10px;
+  flex-wrap:wrap;
+}
+.sizes-card .control-row label{min-width:120px;color:var(--muted);font-size:13px}
+.sizes-card .control-row input[type=number],
+.sizes-card .control-row select{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
+.sizes-card #custom-size-row{display:flex;gap:10px;width:100%}
+.sizes-card #custom-size-row .field{flex:1}
+.sizes-card .control-row small{color:var(--muted);font-size:12px}
+
+@media (max-width:720px){
+  .sizes-card .control-row{flex-direction:column;align-items:flex-start}
+  .sizes-card .control-row label{min-width:0}
+  .sizes-card #custom-size-row{flex-direction:column}
+}
+
 .card.compact.collapsed .control-row,
 .card.compact.collapsed .checkbox-inline,
 .card.compact.collapsed .field > * {
@@ -319,6 +495,12 @@ body{
   .editor{grid-template-columns:1fr;}
   .sidebar.right{order:3}
   .canvas-area{order:2}
+}
+
+/* make certain sections span the full editor width (useful for convert page full-row sections) */
+.editor > .full-row{
+  grid-column: 1 / -1;
+  width: 100%;
 }
 
 @media (max-width:520px){
@@ -436,3 +618,4 @@ body{
   .apply-thumb-scroll .scroll-item img{width:74px;height:120px}
   .apply-thumb-scroll .scroll-item{min-width:78px}
 }
+
